@@ -67,6 +67,7 @@ KNOWN_PROJECTS: dict[str, str] = {
     "proj_fvkY21dJ0ripiOIA2jCC86f3": "namvuong-project",
     "proj_fEboQnaVm4tQCk8kFy0h8s08": "khonlanh-project",
     "proj_zRWDq4YWIDEkxbgMAjX0xy79": "phongnguyen-project",  # RW, j, X
+    "proj_J4rNEXilII2l889OotmE7YNW": "ngjabach-project",
 }
 
 OPENAI_COSTS_URL = "https://api.openai.com/v1/organization/costs"
