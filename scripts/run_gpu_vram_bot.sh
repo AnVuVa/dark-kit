@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-# OpenAI Shadow Ledger — @BachsSlave2Bot startup script
-# Usage: bash scripts/run_openai_bot.sh
+# GPU VRAM Sentinel — @GruVramBot startup script
+# Usage: bash scripts/run_gpu_vram_bot.sh
 # ─────────────────────────────────────────────────────────────
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BOT_DIR="$REPO_ROOT/OpenAIUsageBot"
+BOT_DIR="$REPO_ROOT/GpuVramBot"
 VENV_DIR="$REPO_ROOT/.venv"
 PYTHON=python3
 
@@ -42,25 +42,35 @@ else
         2>/dev/null || pip3 install -q --upgrade requests python-dotenv
 fi
 
-# ── 3. Env check ─────────────────────────────────────────────
+# ── 3. nvidia-smi check ───────────────────────────────────────
+if ! command -v nvidia-smi &> /dev/null; then
+    echo "[error] nvidia-smi not found. NVIDIA drivers must be installed."
+    exit 1
+fi
+
+echo "[check] Detected GPUs:"
+nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader,nounits \
+    | awk -F', ' '{printf "  GPU %s: %s — %s MiB VRAM\n", $1, $2, $3}'
+
+# ── 4. Env check ─────────────────────────────────────────────
 ENV_FILE="$BOT_DIR/.env"
 if [ ! -f "$ENV_FILE" ]; then
     echo "[error] $ENV_FILE not found. Copy .env.example and fill in your secrets."
     exit 1
 fi
 
-if grep -q "PUT_TOKEN_HERE\|PUT_KEY_HERE" "$ENV_FILE"; then
+if grep -q "PUT_TOKEN_HERE\|PUT_ID_HERE" "$ENV_FILE"; then
     echo "[error] .env still contains placeholder values. Fill in real credentials."
     exit 1
 fi
 
-# ── 4. Launch ─────────────────────────────────────────────────
+# ── 5. Launch ─────────────────────────────────────────────────
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  OpenAI Shadow Ledger — @BachsSlave2Bot"
+echo "  GPU VRAM Sentinel — @GruVramBot"
 echo "  Bot dir : $BOT_DIR"
-echo "  Poll    : ${POLL_INTERVAL_MINS:-60} min  |  Limit: \$${DAILY_SPEND_LIMIT:-5.00}/day"
+echo "  Poll    : ${GPU_POLL_INTERVAL_SECS:-60}s  |  Alert threshold: ${VRAM_LOW_THRESHOLD_PCT:-10}% free"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-exec "$PYTHON" "$BOT_DIR/openai_usage_bot.py"
+exec "$PYTHON" "$BOT_DIR/gpu_vram_bot.py"
